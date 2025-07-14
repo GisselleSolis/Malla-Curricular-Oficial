@@ -1,14 +1,134 @@
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Malla Interactiva</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #fff0f5;
+      padding: 20px;
+    }
+    .semestre {
+      margin-bottom: 30px;
+      border-left: 4px solid #ff8a65;
+      padding-left: 10px;
+    }
+    .semestre h2 {
+      color: #e91e63;
+    }
+    .ramo {
+      background-color: #ff8a65;
+      color: white;
+      padding: 10px;
+      margin: 5px;
+      border-radius: 8px;
+      display: inline-block;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .bloqueado {
+      background-color: #fbb;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    .aprobado {
+      background-color: #c8e6c9;
+      text-decoration: line-through;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
-  <h1>Malla Interactiva ✨</h1>
-  <div class="malla"></div>
+  <h1>Malla Interactiva</h1>
+  <div id="malla"></div>
 
-  <script src="script.js"></script>
+  <script>
+    const ramos = {
+      'Semestre 1': {
+        'Matematica 1': ['Matematica 2', 'Macroeconomia 1'],
+        'Programacion': ['Estadistica 1', 'TyE'],
+        'FAN 1': ['FAN 2'],
+        'Taller de comunicacion 1': ['Taller de comunicacion 2']
+      },
+      'Semestre 2': {
+        'Matematica 2': ['Matematica 3', 'Estadistica 1', 'Microeconomia 2'],
+        'Microeconomia 1': ['Macroeconomia 1', 'Microeconomia 2'],
+        'Contabilidad 1': ['Contabilidad 2'],
+        'FAN 2': ['Personas y Equipos', 'Taller de liderazgo y trabajo en equipo'],
+        'Ingles 3': []
+      },
+      'Semestre 3': {
+        'Matematica 3': ['Econometria 1', 'Macroeconomia 2'],
+        'Macroeconomia 1': ['Macroeconomia 2'],
+        'TyE': ['Contabilidad 2', 'Estrategia', 'Ciencia de datos'],
+        'Taller de comunicacion 2': ['Taller de liderazgo y trabajo en equipo'],
+        'Estadistica 1': ['Estadistica 2']
+      }
+      // Puedes seguir con más semestres aquí ↓
+    };
+
+    const container = document.getElementById('malla');
+    const botones = {};
+
+    // Crear semestres y ramos
+    Object.entries(ramos).forEach(([semestre, materias]) => {
+      const semDiv = document.createElement('div');
+      semDiv.className = 'semestre';
+
+      const titulo = document.createElement('h2');
+      titulo.textContent = semestre;
+      semDiv.appendChild(titulo);
+
+      Object.keys(materias).forEach(nombre => {
+        const div = document.createElement('div');
+        div.textContent = nombre;
+        div.className = 'ramo bloqueado';
+        div.onclick = () => aprobar(nombre);
+        semDiv.appendChild(div);
+        botones[nombre] = div;
+      });
+
+      container.appendChild(semDiv);
+    });
+
+    // Desbloquear los que no tienen requisitos
+    const requisitosInversos = {};
+    Object.values(ramos).forEach(materias => {
+      Object.entries(materias).forEach(([origen, destinos]) => {
+        destinos.forEach(dest => {
+          if (!requisitosInversos[dest]) requisitosInversos[dest] = [];
+          requisitosInversos[dest].push(origen);
+        });
+      });
+    });
+
+    Object.keys(botones).forEach(nombre => {
+      if (!requisitosInversos[nombre]) {
+        botones[nombre].classList.remove('bloqueado');
+      }
+    });
+
+    function aprobar(nombre) {
+      const btn = botones[nombre];
+      if (btn.classList.contains('bloqueado') || btn.classList.contains('aprobado')) return;
+      btn.classList.add('aprobado');
+
+      Object.entries(ramos).forEach(([_, materias]) => {
+        Object.entries(materias).forEach(([origen, destinos]) => {
+          if (origen === nombre) {
+            destinos.forEach(dest => {
+              const requisitos = requisitosInversos[dest] || [];
+              const desbloquear = requisitos.every(req => botones[req]?.classList.contains('aprobado'));
+              if (desbloquear) {
+                botones[dest]?.classList.remove('bloqueado');
+              }
+            });
+          }
+        });
+      });
+    }
+  </script>
 </body>
 </html>
+
